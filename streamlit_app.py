@@ -114,10 +114,10 @@ else:
             if u.username != 'admin':
                 st.write(f"**{u.username}**")
                 schedule = get_schedule(u.id, today)
-                period1 = st.checkbox(f"{u.username} 1교시", schedule.period1, key=f"{u.username}_period1")
-                period2 = st.checkbox(f"{u.username} 2교시", schedule.period2, key=f"{u.username}_period2")
-                period3 = st.checkbox(f"{u.username} 3교시", schedule.period3, key=f"{u.username}_period3")
-                period4 = st.checkbox(f"{u.username} 4교시", schedule.period4, key=f"{u.username}_period4")
+                period1 = st.checkbox("1교시", schedule.period1, key=f"{u.username}_period1")
+                period2 = st.checkbox("2교시", schedule.period2, key=f"{u.username}_period2")
+                period3 = st.checkbox("3교시", schedule.period3, key=f"{u.username}_period3")
+                period4 = st.checkbox("4교시", schedule.period4, key=f"{u.username}_period4")
                 if period1 != schedule.period1 or \
                    period2 != schedule.period2 or \
                    period3 != schedule.period3 or \
