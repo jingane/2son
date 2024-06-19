@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime, timedelta
 import pytz
+import logging
 
 # 데이터베이스 설정
 DATABASE_URL = 'sqlite:///schedule.db'
@@ -35,10 +36,17 @@ Base.metadata.create_all(engine)
 
 # 사용자 등록
 def add_user(username):
-    if not session.query(User).filter_by(username=username).first():
-        user = User(username=username)
-        session.add(user)
-        session.commit()
+    try:
+        if not session.query(User).filter_by(username=username).first():
+            user = User(username=username)
+            session.add(user)
+            session.commit()
+            logging.info(f"User '{username}' added to the database.")
+        else:
+            logging.info(f"User '{username}' already exists in the database.")
+    except Exception as e:
+        logging.error(f"Error adding user '{username}': {e}")
+        session.rollback()
 
 add_user("큰아들")
 add_user("작은아들")
@@ -86,6 +94,7 @@ big_son_schedule = get_schedule(big_son.id, today)
 
 # 작은아들 일정 가져오기
 little_son_schedule = get_schedule(little_son.id, today)
+
 # 메모장 UI
 col1, col2 = st.columns(2)
 with col1:
