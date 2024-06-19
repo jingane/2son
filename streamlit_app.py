@@ -106,26 +106,48 @@ else:
 
     # 날짜 설정
     today = datetime.now(pytz.timezone('Europe/Berlin')).date()
-    schedule = get_schedule(user.id, today)
 
-    # 메모장 UI
-    st.subheader(f"{user.username}의 오늘 수업 일정")
-    period1 = st.checkbox("1교시", schedule.period1)
-    period2 = st.checkbox("2교시", schedule.period2)
-    period3 = st.checkbox("3교시", schedule.period3)
-    period4 = st.checkbox("4교시", schedule.period4)
+    if user.username == 'admin':
+        st.subheader("All Users' Schedules")
+        users = session.query(User).all()
+        for u in users:
+            if u.username != 'admin':
+                st.write(f"**{u.username}**")
+                schedule = get_schedule(u.id, today)
+                period1 = st.checkbox(f"{u.username} 1교시", schedule.period1, key=f"{u.username}_period1")
+                period2 = st.checkbox(f"{u.username} 2교시", schedule.period2, key=f"{u.username}_period2")
+                period3 = st.checkbox(f"{u.username} 3교시", schedule.period3, key=f"{u.username}_period3")
+                period4 = st.checkbox(f"{u.username} 4교시", schedule.period4, key=f"{u.username}_period4")
+                if period1 != schedule.period1 or \
+                   period2 != schedule.period2 or \
+                   period3 != schedule.period3 or \
+                   period4 != schedule.period4:
+                    schedule.period1 = period1
+                    schedule.period2 = period2
+                    schedule.period3 = period3
+                    schedule.period4 = period4
+                    session.commit()
+                    st.success(f"{u.username}'s Schedule saved")
+    else:
+        # 개별 사용자 스케줄
+        schedule = get_schedule(user.id, today)
+        st.subheader(f"{user.username}의 오늘 수업 일정")
+        period1 = st.checkbox("1교시", schedule.period1)
+        period2 = st.checkbox("2교시", schedule.period2)
+        period3 = st.checkbox("3교시", schedule.period3)
+        period4 = st.checkbox("4교시", schedule.period4)
 
-    # 자동 저장
-    if period1 != schedule.period1 or \
-       period2 != schedule.period2 or \
-       period3 != schedule.period3 or \
-       period4 != schedule.period4:
-        schedule.period1 = period1
-        schedule.period2 = period2
-        schedule.period3 = period3
-        schedule.period4 = period4
-        session.commit()
-        st.success("Schedule saved")
+        # 자동 저장
+        if period1 != schedule.period1 or \
+           period2 != schedule.period2 or \
+           period3 != schedule.period3 or \
+           period4 != schedule.period4:
+            schedule.period1 = period1
+            schedule.period2 = period2
+            schedule.period3 = period3
+            schedule.period4 = period4
+            session.commit()
+            st.success("Schedule saved")
 
     if st.button("Logout"):
         st.session_state.authenticated = False
