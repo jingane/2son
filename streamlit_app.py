@@ -17,6 +17,7 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     username = Column(String(150), unique=True, nullable=False)
+    password = Column(String(150), nullable=False)
 
 class Schedule(Base):
     __tablename__ = 'schedules'
@@ -33,17 +34,6 @@ User.schedules = relationship('Schedule', order_by=Schedule.id, back_populates='
 
 Base.metadata.create_all(engine)
 
-# 사용자 등록
-def add_user(username):
-    existing_user = session.query(User).filter_by(username=username).first()
-    if not existing_user:
-        new_user = User(username=username)
-        session.add(new_user)
-        session.commit()
-
-add_user("sohn1")
-add_user("sohn2")
-
 # 함수 정의
 def get_schedule(user_id, date):
     schedule = session.query(Schedule).filter_by(user_id=user_id, date=date).first()
@@ -52,6 +42,20 @@ def get_schedule(user_id, date):
         session.add(schedule)
         session.commit()
     return schedule
+
+def authenticate(username, password):
+    user = session.query(User).filter_by(username=username).first()
+    if user and user.password == password:
+        return True
+    return False
+
+def register(username, password):
+    if session.query(User).filter_by(username=username).first():
+        return False
+    user = User(username=username, password=password)
+    session.add(user)
+    session.commit()
+    return True
 
 # 날짜 변경 확인 및 데이터 초기화
 def reset_schedules():
@@ -65,60 +69,65 @@ def reset_schedules():
         schedule.period4 = False
     session.commit()
 
+# Streamlit 세션 상태 초기화
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+    st.session_state.user = None
+
 # Streamlit 앱
 st.title("Schedule Checker")
 
-# 날짜 변경 확인 및 데이터 초기화
-reset_schedules()
+# 사용자 인증 및 회원가입
+if not st.session_state.authenticated:
+    auth_mode = st.radio("Choose an option", ["Login", "Sign Up"])
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
 
-# 날짜 설정
-today = datetime.now(pytz.timezone('Europe/Berlin')).date()
+    if auth_mode == "Login":
+        if st.button("Login"):
+            if authenticate(username, password):
+                st.session_state.authenticated = True
+                st.session_state.user = username
+                st.experimental_rerun()
+            else:
+                st.error("Invalid username or password")
+    else:
+        if st.button("Sign Up"):
+            if register(username, password):
+                st.success("User registered successfully")
+            else:
+                st.error("Username already exists")
+else:
+    # 날짜 변경 확인 및 데이터 초기화
+    reset_schedules()
 
-# 사용자 정보 가져오기
-sohn1 = session.query(User).filter_by(username="sohn1").first()
-sohn2 = session.query(User).filter_by(username="sohn2").first()
+    # 사용자 정보 가져오기
+    user = session.query(User).filter_by(username=st.session_state.user).first()
 
-# sohn1 일정 가져오기
-sohn1_schedule = get_schedule(sohn1.id, today)
+    # 날짜 설정
+    today = datetime.now(pytz.timezone('Europe/Berlin')).date()
+    schedule = get_schedule(user.id, today)
 
-# sohn2 일정 가져오기
-sohn2_schedule = get_schedule(sohn2.id, today)
+    # 메모장 UI
+    st.subheader(f"{user.username}의 오늘 수업 일정")
+    period1 = st.checkbox("1교시", schedule.period1)
+    period2 = st.checkbox("2교시", schedule.period2)
+    period3 = st.checkbox("3교시", schedule.period3)
+    period4 = st.checkbox("4교시", schedule.period4)
 
-# 메모장 UI
-col1, col2 = st.columns(2)
-with col1:
-    st.subheader("sohn1 수업 일정")
-    sohn1_period1 = st.checkbox("1교시", sohn1_schedule.period1, key="sohn1_period1")
-    sohn1_period2 = st.checkbox("2교시", sohn1_schedule.period2, key="sohn1_period2")
-    sohn1_period3 = st.checkbox("3교시", sohn1_schedule.period3, key="sohn1_period3")
-    sohn1_period4 = st.checkbox("4교시", sohn1_schedule.period4, key="sohn1_period4")
+    # 자동 저장
+    if period1 != schedule.period1 or \
+       period2 != schedule.period2 or \
+       period3 != schedule.period3 or \
+       period4 != schedule.period4:
+        schedule.period1 = period1
+        schedule.period2 = period2
+        schedule.period3 = period3
+        schedule.period4 = period4
+        session.commit()
+        st.success("Schedule saved")
 
-with col2:
-    st.subheader("sohn2 수업 일정")
-    sohn2_period1 = st.checkbox("1교시", sohn2_schedule.period1, key="sohn2_period1")
-    sohn2_period2 = st.checkbox("2교시", sohn2_schedule.period2, key="sohn2_period2")
-    sohn2_period3 = st.checkbox("3교시", sohn2_schedule.period3, key="sohn2_period3")
-    sohn2_period4 = st.checkbox("4교시", sohn2_schedule.period4, key="sohn2_period4")
-
-# 자동 저장
-if sohn1_period1 != sohn1_schedule.period1 or \
-   sohn1_period2 != sohn1_schedule.period2 or \
-   sohn1_period3 != sohn1_schedule.period3 or \
-   sohn1_period4 != sohn1_schedule.period4:
-    sohn1_schedule.period1 = sohn1_period1
-    sohn1_schedule.period2 = sohn1_period2
-    sohn1_schedule.period3 = sohn1_period3
-    sohn1_schedule.period4 = sohn1_period4
-    session.commit()
-    st.success("sohn1 일정 저장됨")
-
-if sohn2_period1 != sohn2_schedule.period1 or \
-   sohn2_period2 != sohn2_schedule.period2 or \
-   sohn2_period3 != sohn2_schedule.period3 or \
-   sohn2_period4 != sohn2_schedule.period4:
-    sohn2_schedule.period1 = sohn2_period1
-    sohn2_schedule.period2 = sohn2_period2
-    sohn2_schedule.period3 = sohn2_period3
-    sohn2_schedule.period4 = sohn2_period4
-    session.commit()
-    st.success("sohn2 일정 저장됨")
+    if st.button("Logout"):
+        st.session_state.authenticated = False
+        st.session_state.user = None
+        st.experimental_rerun()
