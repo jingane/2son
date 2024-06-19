@@ -35,13 +35,14 @@ Base.metadata.create_all(engine)
 
 # 사용자 등록
 def add_user(username):
-    if not session.query(User).filter_by(username=username).first():
-        user = User(username=username)
-        session.add(user)
+    existing_user = session.query(User).filter_by(username=username).first()
+    if not existing_user:
+        new_user = User(username=username)
+        session.add(new_user)
         session.commit()
 
-add_user("아들 1")
-add_user("아들 2")
+add_user("sohn1")
+add_user("sohn2")
 
 # 함수 정의
 def get_schedule(user_id, date):
@@ -74,50 +75,50 @@ reset_schedules()
 today = datetime.now(pytz.timezone('Europe/Berlin')).date()
 
 # 사용자 정보 가져오기
-son1 = session.query(User).filter_by(username="아들 1").first()
-son2 = session.query(User).filter_by(username="아들 2").first()
+sohn1 = session.query(User).filter_by(username="sohn1").first()
+sohn2 = session.query(User).filter_by(username="sohn2").first()
 
-# 아들 1 일정 가져오기
-son1_schedule = get_schedule(son1.id, today)
+# sohn1 일정 가져오기
+sohn1_schedule = get_schedule(sohn1.id, today)
 
-# 아들 2 일정 가져오기
-son2_schedule = get_schedule(son2.id, today)
+# sohn2 일정 가져오기
+sohn2_schedule = get_schedule(sohn2.id, today)
 
 # 메모장 UI
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader("아들 1 수업 일정")
-    son1_period1 = st.checkbox("1교시", son1_schedule.period1, key="son1_period1")
-    son1_period2 = st.checkbox("2교시", son1_schedule.period2, key="son1_period2")
-    son1_period3 = st.checkbox("3교시", son1_schedule.period3, key="son1_period3")
-    son1_period4 = st.checkbox("4교시", son1_schedule.period4, key="son1_period4")
+    st.subheader("sohn1 수업 일정")
+    sohn1_period1 = st.checkbox("1교시", sohn1_schedule.period1, key="sohn1_period1")
+    sohn1_period2 = st.checkbox("2교시", sohn1_schedule.period2, key="sohn1_period2")
+    sohn1_period3 = st.checkbox("3교시", sohn1_schedule.period3, key="sohn1_period3")
+    sohn1_period4 = st.checkbox("4교시", sohn1_schedule.period4, key="sohn1_period4")
 
 with col2:
-    st.subheader("아들 2 수업 일정")
-    son2_period1 = st.checkbox("1교시", son2_schedule.period1, key="son2_period1")
-    son2_period2 = st.checkbox("2교시", son2_schedule.period2, key="son2_period2")
-    son2_period3 = st.checkbox("3교시", son2_schedule.period3, key="son2_period3")
-    son2_period4 = st.checkbox("4교시", son2_schedule.period4, key="son2_period4")
+    st.subheader("sohn2 수업 일정")
+    sohn2_period1 = st.checkbox("1교시", sohn2_schedule.period1, key="sohn2_period1")
+    sohn2_period2 = st.checkbox("2교시", sohn2_schedule.period2, key="sohn2_period2")
+    sohn2_period3 = st.checkbox("3교시", sohn2_schedule.period3, key="sohn2_period3")
+    sohn2_period4 = st.checkbox("4교시", sohn2_schedule.period4, key="sohn2_period4")
 
 # 자동 저장
-if son1_period1 != son1_schedule.period1 or \
-   son1_period2 != son1_schedule.period2 or \
-   son1_period3 != son1_schedule.period3 or \
-   son1_period4 != son1_schedule.period4:
-    son1_schedule.period1 = son1_period1
-    son1_schedule.period2 = son1_period2
-    son1_schedule.period3 = son1_period3
-    son1_schedule.period4 = son1_period4
+if sohn1_period1 != sohn1_schedule.period1 or \
+   sohn1_period2 != sohn1_schedule.period2 or \
+   sohn1_period3 != sohn1_schedule.period3 or \
+   sohn1_period4 != sohn1_schedule.period4:
+    sohn1_schedule.period1 = sohn1_period1
+    sohn1_schedule.period2 = sohn1_period2
+    sohn1_schedule.period3 = sohn1_period3
+    sohn1_schedule.period4 = sohn1_period4
     session.commit()
-    st.success("아들 1 일정 저장됨")
+    st.success("sohn1 일정 저장됨")
 
-if son2_period1 != son2_schedule.period1 or \
-   son2_period2 != son2_schedule.period2 or \
-   son2_period3 != son2_schedule.period3 or \
-   son2_period4 != son2_schedule.period4:
-    son2_schedule.period1 = son2_period1
-    son2_schedule.period2 = son2_period2
-    son2_schedule.period3 = son2_period3
-    son2_schedule.period4 = son2_period4
+if sohn2_period1 != sohn2_schedule.period1 or \
+   sohn2_period2 != sohn2_schedule.period2 or \
+   sohn2_period3 != sohn2_schedule.period3 or \
+   sohn2_period4 != sohn2_schedule.period4:
+    sohn2_schedule.period1 = sohn2_period1
+    sohn2_schedule.period2 = sohn2_period2
+    sohn2_schedule.period3 = sohn2_period3
+    sohn2_schedule.period4 = sohn2_period4
     session.commit()
-    st.success("아들 2 일정 저장됨")
+    st.success("sohn2 일정 저장됨")
