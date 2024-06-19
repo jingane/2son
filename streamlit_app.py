@@ -89,47 +89,51 @@ today = datetime.now(pytz.timezone('Europe/Berlin')).date()
 big_son = session.query(User).filter_by(username="큰아들").first()
 little_son = session.query(User).filter_by(username="작은아들").first()
 
-# 큰아들 일정 가져오기
-big_son_schedule = get_schedule(big_son.id, today)
+# 큰아들 또는 작은아들 정보가 없을 경우 예외 처리
+if big_son is None or little_son is None:
+    st.error("사용자 정보를 불러오는 데 실패했습니다.")
+else:
+    # 큰아들 일정 가져오기
+    big_son_schedule = get_schedule(big_son.id, today)
 
-# 작은아들 일정 가져오기
-little_son_schedule = get_schedule(little_son.id, today)
+    # 작은아들 일정 가져오기
+    little_son_schedule = get_schedule(little_son.id, today)
 
-# 메모장 UI
-col1, col2 = st.columns(2)
-with col1:
-    st.subheader("큰아들 수업 일정")
-    big_son_period1 = st.checkbox("1교시", big_son_schedule.period1, key="big_son_period1")
-    big_son_period2 = st.checkbox("2교시", big_son_schedule.period2, key="big_son_period2")
-    big_son_period3 = st.checkbox("3교시", big_son_schedule.period3, key="big_son_period3")
-    big_son_period4 = st.checkbox("4교시", big_son_schedule.period4, key="big_son_period4")
+    # 메모장 UI
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("큰아들 수업 일정")
+        big_son_period1 = st.checkbox("1교시", big_son_schedule.period1, key="big_son_period1")
+        big_son_period2 = st.checkbox("2교시", big_son_schedule.period2, key="big_son_period2")
+        big_son_period3 = st.checkbox("3교시", big_son_schedule.period3, key="big_son_period3")
+        big_son_period4 = st.checkbox("4교시", big_son_schedule.period4, key="big_son_period4")
 
-with col2:
-    st.subheader("작은아들 수업 일정")
-    little_son_period1 = st.checkbox("1교시", little_son_schedule.period1, key="little_son_period1")
-    little_son_period2 = st.checkbox("2교시", little_son_schedule.period2, key="little_son_period2")
-    little_son_period3 = st.checkbox("3교시", little_son_schedule.period3, key="little_son_period3")
-    little_son_period4 = st.checkbox("4교시", little_son_schedule.period4, key="little_son_period4")
+    with col2:
+        st.subheader("작은아들 수업 일정")
+        little_son_period1 = st.checkbox("1교시", little_son_schedule.period1, key="little_son_period1")
+        little_son_period2 = st.checkbox("2교시", little_son_schedule.period2, key="little_son_period2")
+        little_son_period3 = st.checkbox("3교시", little_son_schedule.period3, key="little_son_period3")
+        little_son_period4 = st.checkbox("4교시", little_son_schedule.period4, key="little_son_period4")
 
-# 자동 저장
-if big_son_period1 != big_son_schedule.period1 or \
-   big_son_period2 != big_son_schedule.period2 or \
-   big_son_period3 != big_son_schedule.period3 or \
-   big_son_period4 != big_son_schedule.period4:
-    big_son_schedule.period1 = big_son_period1
-    big_son_schedule.period2 = big_son_period2
-    big_son_schedule.period3 = big_son_period3
-    big_son_schedule.period4 = big_son_period4
-    session.commit()
-    st.success("큰아들 일정 저장됨")
+    # 자동 저장
+    if big_son_period1 != big_son_schedule.period1 or \
+       big_son_period2 != big_son_schedule.period2 or \
+       big_son_period3 != big_son_schedule.period3 or \
+       big_son_period4 != big_son_schedule.period4:
+        big_son_schedule.period1 = big_son_period1
+        big_son_schedule.period2 = big_son_period2
+        big_son_schedule.period3 = big_son_period3
+        big_son_schedule.period4 = big_son_period4
+        session.commit()
+        st.success("큰아들 일정 저장됨")
 
-if little_son_period1 != little_son_schedule.period1 or \
-   little_son_period2 != little_son_schedule.period2 or \
-   little_son_period3 != little_son_schedule.period3 or \
-   little_son_period4 != little_son_schedule.period4:
-    little_son_schedule.period1 = little_son_period1
-    little_son_schedule.period2 = little_son_period2
-    little_son_schedule.period3 = little_son_period3
-    little_son_schedule.period4 = little_son_period4
-    session.commit()
-    st.success("작은아들 일정 저장됨")
+    if little_son_period1 != little_son_schedule.period1 or \
+       little_son_period2 != little_son_schedule.period2 or \
+       little_son_period3 != little_son_schedule.period3 or \
+       little_son_period4 != little_son_schedule.period4:
+        little_son_schedule.period1 = little_son_period1
+        little_son_schedule.period2 = little_son_period2
+        little_son_schedule.period3 = little_son_period3
+        little_son_schedule.period4 = little_son_period4
+        session.commit()
+        st.success("작은아들 일정 저장됨")
