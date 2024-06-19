@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 import pytz
 import logging
 
+# 로그 설정
+logging.basicConfig(level=logging.INFO)
+
 # 데이터베이스 설정
 DATABASE_URL = 'sqlite:///schedule.db'
 engine = create_engine(DATABASE_URL)
@@ -89,9 +92,14 @@ today = datetime.now(pytz.timezone('Europe/Berlin')).date()
 big_son = session.query(User).filter_by(username="큰아들").first()
 little_son = session.query(User).filter_by(username="작은아들").first()
 
+# 디버깅용 로그 추가
+logging.info(f"큰아들 정보: {big_son}")
+logging.info(f"작은아들 정보: {little_son}")
+
 # 큰아들 또는 작은아들 정보가 없을 경우 예외 처리
 if big_son is None or little_son is None:
     st.error("사용자 정보를 불러오는 데 실패했습니다.")
+    st.stop()
 else:
     # 큰아들 일정 가져오기
     big_son_schedule = get_schedule(big_son.id, today)
