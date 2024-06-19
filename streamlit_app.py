@@ -86,7 +86,6 @@ big_son_schedule = get_schedule(big_son.id, today)
 
 # 작은아들 일정 가져오기
 little_son_schedule = get_schedule(little_son.id, today)
-
 # 메모장 UI
 col1, col2 = st.columns(2)
 with col1:
