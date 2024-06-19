@@ -4,10 +4,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime, timedelta
 import pytz
-import logging
-
-# 로그 설정
-logging.basicConfig(level=logging.INFO)
 
 # 데이터베이스 설정
 DATABASE_URL = 'sqlite:///schedule.db'
@@ -39,20 +35,13 @@ Base.metadata.create_all(engine)
 
 # 사용자 등록
 def add_user(username):
-    try:
-        if not session.query(User).filter_by(username=username).first():
-            user = User(username=username)
-            session.add(user)
-            session.commit()
-            logging.info(f"User '{username}' added to the database.")
-        else:
-            logging.info(f"User '{username}' already exists in the database.")
-    except Exception as e:
-        logging.error(f"Error adding user '{username}': {e}")
-        session.rollback()
+    if not session.query(User).filter_by(username=username).first():
+        user = User(username=username)
+        session.add(user)
+        session.commit()
 
-add_user("큰아들")
-add_user("작은아들")
+add_user("아들 1")
+add_user("아들 2")
 
 # 함수 정의
 def get_schedule(user_id, date):
@@ -75,10 +64,6 @@ def reset_schedules():
         schedule.period4 = False
     session.commit()
 
-# Streamlit 세션 상태 초기화
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = True
-
 # Streamlit 앱
 st.title("Schedule Checker")
 
@@ -89,59 +74,50 @@ reset_schedules()
 today = datetime.now(pytz.timezone('Europe/Berlin')).date()
 
 # 사용자 정보 가져오기
-big_son = session.query(User).filter_by(username="큰아들").first()
-little_son = session.query(User).filter_by(username="작은아들").first()
+son1 = session.query(User).filter_by(username="아들 1").first()
+son2 = session.query(User).filter_by(username="아들 2").first()
 
-# 디버깅용 로그 추가
-logging.info(f"큰아들 정보: {big_son}")
-logging.info(f"작은아들 정보: {little_son}")
+# 아들 1 일정 가져오기
+son1_schedule = get_schedule(son1.id, today)
 
-# 큰아들 또는 작은아들 정보가 없을 경우 예외 처리
-if big_son is None or little_son is None:
-    st.error("사용자 정보를 불러오는 데 실패했습니다.")
-    st.stop()
-else:
-    # 큰아들 일정 가져오기
-    big_son_schedule = get_schedule(big_son.id, today)
+# 아들 2 일정 가져오기
+son2_schedule = get_schedule(son2.id, today)
 
-    # 작은아들 일정 가져오기
-    little_son_schedule = get_schedule(little_son.id, today)
+# 메모장 UI
+col1, col2 = st.columns(2)
+with col1:
+    st.subheader("아들 1 수업 일정")
+    son1_period1 = st.checkbox("1교시", son1_schedule.period1, key="son1_period1")
+    son1_period2 = st.checkbox("2교시", son1_schedule.period2, key="son1_period2")
+    son1_period3 = st.checkbox("3교시", son1_schedule.period3, key="son1_period3")
+    son1_period4 = st.checkbox("4교시", son1_schedule.period4, key="son1_period4")
 
-    # 메모장 UI
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("큰아들 수업 일정")
-        big_son_period1 = st.checkbox("1교시", big_son_schedule.period1, key="big_son_period1")
-        big_son_period2 = st.checkbox("2교시", big_son_schedule.period2, key="big_son_period2")
-        big_son_period3 = st.checkbox("3교시", big_son_schedule.period3, key="big_son_period3")
-        big_son_period4 = st.checkbox("4교시", big_son_schedule.period4, key="big_son_period4")
+with col2:
+    st.subheader("아들 2 수업 일정")
+    son2_period1 = st.checkbox("1교시", son2_schedule.period1, key="son2_period1")
+    son2_period2 = st.checkbox("2교시", son2_schedule.period2, key="son2_period2")
+    son2_period3 = st.checkbox("3교시", son2_schedule.period3, key="son2_period3")
+    son2_period4 = st.checkbox("4교시", son2_schedule.period4, key="son2_period4")
 
-    with col2:
-        st.subheader("작은아들 수업 일정")
-        little_son_period1 = st.checkbox("1교시", little_son_schedule.period1, key="little_son_period1")
-        little_son_period2 = st.checkbox("2교시", little_son_schedule.period2, key="little_son_period2")
-        little_son_period3 = st.checkbox("3교시", little_son_schedule.period3, key="little_son_period3")
-        little_son_period4 = st.checkbox("4교시", little_son_schedule.period4, key="little_son_period4")
+# 자동 저장
+if son1_period1 != son1_schedule.period1 or \
+   son1_period2 != son1_schedule.period2 or \
+   son1_period3 != son1_schedule.period3 or \
+   son1_period4 != son1_schedule.period4:
+    son1_schedule.period1 = son1_period1
+    son1_schedule.period2 = son1_period2
+    son1_schedule.period3 = son1_period3
+    son1_schedule.period4 = son1_period4
+    session.commit()
+    st.success("아들 1 일정 저장됨")
 
-    # 자동 저장
-    if big_son_period1 != big_son_schedule.period1 or \
-       big_son_period2 != big_son_schedule.period2 or \
-       big_son_period3 != big_son_schedule.period3 or \
-       big_son_period4 != big_son_schedule.period4:
-        big_son_schedule.period1 = big_son_period1
-        big_son_schedule.period2 = big_son_period2
-        big_son_schedule.period3 = big_son_period3
-        big_son_schedule.period4 = big_son_period4
-        session.commit()
-        st.success("큰아들 일정 저장됨")
-
-    if little_son_period1 != little_son_schedule.period1 or \
-       little_son_period2 != little_son_schedule.period2 or \
-       little_son_period3 != little_son_schedule.period3 or \
-       little_son_period4 != little_son_schedule.period4:
-        little_son_schedule.period1 = little_son_period1
-        little_son_schedule.period2 = little_son_period2
-        little_son_schedule.period3 = little_son_period3
-        little_son_schedule.period4 = little_son_period4
-        session.commit()
-        st.success("작은아들 일정 저장됨")
+if son2_period1 != son2_schedule.period1 or \
+   son2_period2 != son2_schedule.period2 or \
+   son2_period3 != son2_schedule.period3 or \
+   son2_period4 != son2_schedule.period4:
+    son2_schedule.period1 = son2_period1
+    son2_schedule.period2 = son2_period2
+    son2_schedule.period3 = son2_period3
+    son2_schedule.period4 = son2_period4
+    session.commit()
+    st.success("아들 2 일정 저장됨")
